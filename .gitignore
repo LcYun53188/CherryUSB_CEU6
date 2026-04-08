@@ -1,0 +1,47 @@
+# MDK-ARM (Keil)
+MDK-ARM/
+**/MDK-ARM/
+*.o
+*.d
+*.crf
+*.lnp
+*.axf
+*.htm
+*.dep
+*.map
+*.lst
+*.obj
+*.iex
+*.uvguix.*
+*.uvgui.*
+*.uvoptx
+*.scvd
+*.bak
+*.dep
+*.pyc
+
+# STM32CubeIDE / GCC
+Debug/
+Release/
+*.elf
+*.bin
+*.hex
+*.srec
+*.list
+*.p
+*.map
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.bak
+*.tmp
+
+# Jujutsu
+.jj/
