@@ -14,6 +14,9 @@
 - **内核频率**: 96MHz (USB 时钟 48MHz)
 - **操作系统**: FreeRTOS (CMSIS-OS V2)
 
+## 📚 软件依赖
+- **[CherryUSB](https://github.com/cherry-cpu/CherryUSB)**: 版本 **v1.6.0** (Host Stack)
+
 ### 引脚定义 (Pinout)
 | 功能模块 | 引脚 | 描述 |
 | :--- | :--- | :--- |
