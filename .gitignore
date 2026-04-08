@@ -1,6 +1,7 @@
 # MDK-ARM (Keil)
-MDK-ARM/
-**/MDK-ARM/
+MDK-ARM/CherryUSB_CEU6/
+MDK-ARM/*.uvguix.*
+MDK-ARM/build_log.txt
 *.o
 *.d
 *.crf
@@ -12,12 +13,8 @@ MDK-ARM/
 *.lst
 *.obj
 *.iex
-*.uvguix.*
-*.uvgui.*
-*.uvoptx
 *.scvd
 *.bak
-*.dep
 *.pyc
 
 # STM32CubeIDE / GCC
