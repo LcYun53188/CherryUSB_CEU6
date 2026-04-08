@@ -3,7 +3,7 @@
 本项目基于 STM32F411CEU6 开发板，利用 **CherryUSB** 协议栈实现 USB Host 功能，将接入的 USB 控制器（如 Xbox 手柄、键鼠等）信号转换为标准 **SBUS** 协议输出。
 
 ## 🚀 核心功能
-- **USB Host 支持**：集成 CherryUSB 协议栈，目前支持 Xbox 手柄、HID 鼠标和键盘的接入。
+- **USB Host 支持**：集成 CherryUSB 协议栈，通过开发板自带的 USB 接口，目前支持 Xbox 手柄、HID 鼠标和键盘的接入。
 - **协议转换**：解析手柄摇杆与按键数据，实时封装为 25 字节的标准 SBUS 帧。
 - **多路输出**：
   - **标准 SBUS**：USART2 输出，100k 波特率，直接对接飞控或其他接收机接口。
@@ -20,8 +20,7 @@
 ### 引脚定义 (Pinout)
 | 功能模块 | 引脚 | 描述 |
 | :--- | :--- | :--- |
-| **USB_DM** | PA11 | USB D- 数据线 |
-| **USB_DP** | PA12 | USB D+ 数据线 (需外部 5V 供电或通过 VBUS 供电) |
+| **USB 接口** | Type-C | STM32F411CEU6 开发板自带 USB 接口 (需外部 5V 供电或通过 VBUS 供电) |
 | **SBUS_TX** | **PA2** | USART2 输出 (100k, 9-E-2) |
 | **DEBUG_TX** | **PA9** | USART1 输出 (115200, 8-N-1) |
 
