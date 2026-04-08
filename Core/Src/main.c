@@ -37,6 +37,8 @@
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart1_tx;
+DMA_HandleTypeDef hdma_usart2_tx;
 
 HCD_HandleTypeDef hhcd_USB_OTG_FS;
 
@@ -60,6 +62,7 @@ volatile int8_t mouse_dx = 0, mouse_dy = 0;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USB_OTG_FS_HCD_Init(void);
@@ -145,6 +148,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   MX_USB_OTG_FS_HCD_Init();
@@ -345,6 +349,26 @@ static void MX_USB_OTG_FS_HCD_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Stream6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
+  /* DMA2_Stream7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -391,8 +415,8 @@ void StartDefaultTask(void *argument)
     sbus_channels[7] = (pad_buttons & 0x8000) ? 1800 : 200; // Y
 
     sbus_build_frame(sbus_frame, sbus_channels);
-    HAL_UART_Transmit(&huart2, sbus_frame, 25, 5); // Output SBUS
-    HAL_UART_Transmit(&huart1, sbus_frame, 25, 5); // 普通串口标准输出
+    HAL_UART_Transmit_DMA(&huart2, sbus_frame, 25); // Output SBUS (DMA)
+    HAL_UART_Transmit_DMA(&huart1, sbus_frame, 25); // 普通串口标准输出 (DMA)
     
     osDelay(10); // 10ms loop
   }
