@@ -40,13 +40,18 @@ const SbusMappingConfig_t sbus_map_config[16] = {
     // CH9: D-Pad Down
     MAP_BUTTON(GAMEPAD_BTN_DDOWN, 1800, 200),
 
-    // CH10~CH15: Unmapped
-    MAP_NONE(),
-    MAP_NONE(),
-    MAP_NONE(),
-    MAP_NONE(),
-    MAP_NONE(),
-    MAP_NONE()
+    // CH10: D-Pad Left
+    MAP_BUTTON(GAMEPAD_BTN_DLEFT, 1800, 200),
+    // CH11: D-Pad Right
+    MAP_BUTTON(GAMEPAD_BTN_DRIGHT, 1800, 200),
+
+    // CH12~CH13: Triggers
+    MAP_AXIS(GAMEPAD_AXIS_LT, 200, 1800),
+    MAP_AXIS(GAMEPAD_AXIS_RT, 200, 1800),
+
+    // CH14~CH15: Bumpers
+    MAP_BUTTON(GAMEPAD_BTN_LB, 1800, 200),
+    MAP_BUTTON(GAMEPAD_BTN_RB, 1800, 200)
 };
 
 /* ==============================================================================
