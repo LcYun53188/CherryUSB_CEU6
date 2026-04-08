@@ -71,14 +71,19 @@ const SbusMappingConfig_t uart_map_config[16] = {
     MAP_BUTTON(GAMEPAD_BTN_X, 1, 0),
     MAP_BUTTON(GAMEPAD_BTN_Y, 1, 0),
 
-    MAP_NONE(),
-    MAP_NONE(),
-    MAP_NONE(),
-    MAP_NONE(),
-    MAP_NONE(),
-    MAP_NONE(),
-    MAP_NONE(),
-    MAP_NONE()
+    // CH8~CH9: Triggers (Analog)
+    MAP_AXIS(GAMEPAD_AXIS_LT, -30000, 30000),
+    MAP_AXIS(GAMEPAD_AXIS_RT, -30000, 30000),
+
+    // CH10~CH13: D-Pad
+    MAP_BUTTON(GAMEPAD_BTN_DUP,    1, 0),
+    MAP_BUTTON(GAMEPAD_BTN_DDOWN,  1, 0),
+    MAP_BUTTON(GAMEPAD_BTN_DLEFT,  1, 0),
+    MAP_BUTTON(GAMEPAD_BTN_DRIGHT, 1, 0),
+
+    // CH14~CH15: Bumpers
+    MAP_BUTTON(GAMEPAD_BTN_LB, 1, 0),
+    MAP_BUTTON(GAMEPAD_BTN_RB, 1, 0)
 };
 
 /* ==============================================================================
