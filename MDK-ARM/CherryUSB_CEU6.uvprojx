@@ -476,6 +476,11 @@
                 </FileArmAds>
               </FileOption>
             </File>
+            <File>
+              <FileName>app_mapper.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\app_mapper.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

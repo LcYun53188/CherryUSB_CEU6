@@ -16,12 +16,19 @@
 #include "usbh_hid.h"
 #include "usbh_xbox.h"
 #include "app_sbus.h"
+#include "app_mapper.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+#pragma pack(push, 1)
+typedef struct {
+    uint8_t header;      // 区分通道的帧头 (例如 0x80 + 通道号)
+    int16_t value;       // 数据值
+    uint8_t tail;        // 帧尾 (如设定为 0x5A)
+} UartChannelFrame_t;
+#pragma pack(pop)
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -49,13 +56,12 @@ const osThreadAttr_t defaultTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* USER CODE BEGIN PV */
-
 uint16_t sbus_channels[16];
 uint8_t sbus_frame[25];
 
-volatile uint16_t pad_lx = 1024, pad_ly = 1024, pad_rx = 1024, pad_ry = 1024;
-volatile uint16_t pad_buttons = 0;
+uint16_t uart_channels[16];
+UartChannelFrame_t uart_frames[16];
+
 volatile int8_t mouse_dx = 0, mouse_dy = 0;
 /* USER CODE END PV */
 
@@ -103,16 +109,38 @@ void usbh_xbox_callback(void *arg, int nbytes)
     if (nbytes > 0) {
         uint8_t *buf = xbox_class->intin_urb.transfer_buffer;
         if(buf[0] == 0x00 && nbytes >= 14) {
-            pad_buttons = (buf[3] << 8) | buf[2];
-            int16_t lx = (int16_t)((buf[7] << 8) | buf[6]);
-            int16_t ly = (int16_t)((buf[9] << 8) | buf[8]);
-            int16_t rx = (int16_t)((buf[11] << 8) | buf[10]);
-            int16_t ry = (int16_t)((buf[13] << 8) | buf[12]);
+            GamepadState_t pad = {0};
+
+            // Byte 2
+            pad.buttons[GAMEPAD_BTN_DUP]    = buf[2] & 0x01;
+            pad.buttons[GAMEPAD_BTN_DDOWN]  = buf[2] & 0x02;
+            pad.buttons[GAMEPAD_BTN_DLEFT]  = buf[2] & 0x04;
+            pad.buttons[GAMEPAD_BTN_DRIGHT] = buf[2] & 0x08;
+            pad.buttons[GAMEPAD_BTN_START]  = buf[2] & 0x10;
+            pad.buttons[GAMEPAD_BTN_BACK]   = buf[2] & 0x20;
+            pad.buttons[GAMEPAD_BTN_L3]     = buf[2] & 0x40;
+            pad.buttons[GAMEPAD_BTN_R3]     = buf[2] & 0x80;
+
+            // Byte 3
+            pad.buttons[GAMEPAD_BTN_LB]     = buf[3] & 0x01;
+            pad.buttons[GAMEPAD_BTN_RB]     = buf[3] & 0x02;
+            pad.buttons[GAMEPAD_BTN_XBOX]   = buf[3] & 0x04;
+            pad.buttons[GAMEPAD_BTN_A]      = buf[3] & 0x10;
+            pad.buttons[GAMEPAD_BTN_B]      = buf[3] & 0x20;
+            pad.buttons[GAMEPAD_BTN_X]      = buf[3] & 0x40;
+            pad.buttons[GAMEPAD_BTN_Y]      = buf[3] & 0x80;
+
+            // Triggers (Map 8-bit 0~255 to full 16-bit range roughly)
+            pad.axes[GAMEPAD_AXIS_LT] = (int16_t)(buf[4] * 257) - 32768; 
+            pad.axes[GAMEPAD_AXIS_RT] = (int16_t)(buf[5] * 257) - 32768;
+
+            // Sticks (Native 16-bit)
+            pad.axes[GAMEPAD_AXIS_LX] = (int16_t)((buf[7] << 8) | buf[6]);
+            pad.axes[GAMEPAD_AXIS_LY] = (int16_t)((buf[9] << 8) | buf[8]);
+            pad.axes[GAMEPAD_AXIS_RX] = (int16_t)((buf[11] << 8) | buf[10]);
+            pad.axes[GAMEPAD_AXIS_RY] = (int16_t)((buf[13] << 8) | buf[12]);
             
-            pad_lx = (lx / 32) + 1024;
-            pad_ly = (ly / 32) + 1024;
-            pad_rx = (rx / 32) + 1024;
-            pad_ry = (ry / 32) + 1024;
+            Mapper_UpdateState(&pad);
         }
     }
     usbh_submit_urb(&xbox_class->intin_urb);
@@ -405,18 +433,19 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    sbus_channels[0] = pad_lx;
-    sbus_channels[1] = pad_ly;
-    sbus_channels[2] = pad_rx;
-    sbus_channels[3] = pad_ry;
-    sbus_channels[4] = (pad_buttons & 0x1000) ? 1800 : 200; // A
-    sbus_channels[5] = (pad_buttons & 0x2000) ? 1800 : 200; // B
-    sbus_channels[6] = (pad_buttons & 0x4000) ? 1800 : 200; // X
-    sbus_channels[7] = (pad_buttons & 0x8000) ? 1800 : 200; // Y
-
+    // 1. SBUS 数据处理与发送
+    Mapper_GetSbusByMode(sbus_channels);
     sbus_build_frame(sbus_frame, sbus_channels);
     HAL_UART_Transmit_DMA(&huart2, sbus_frame, 25); // Output SBUS (DMA)
-    HAL_UART_Transmit_DMA(&huart1, sbus_frame, 25); // 普通串口标准输出 (DMA)
+
+    // 2. 纯结构体数据处理与普通串口发送
+    Mapper_GetUartChannels(uart_channels);
+    for (int i = 0; i < 16; i++) {
+        uart_frames[i].header = 0x80 + i; // 帧头区分，0x80 代表 CH0, 0x8F 代表 CH15
+        uart_frames[i].value = (int16_t)uart_channels[i];
+        uart_frames[i].tail = 0x5A;       // 固定帧尾
+    }
+    HAL_UART_Transmit_DMA(&huart1, (uint8_t*)uart_frames, sizeof(uart_frames)); // 纯代码结构体发包
     
     osDelay(10); // 10ms loop
   }
